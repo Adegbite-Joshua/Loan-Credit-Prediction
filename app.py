@@ -1,206 +1,91 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import pandas as pd
+import joblib
 import numpy as np
-import pickle
-import os
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-import warnings
-warnings.filterwarnings('ignore')
+from preprocessing import FeatureEngineering, NumericalTransformer, iqr_cap
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Global variables for model and preprocessors
-model = None
-label_encoders = {}
-scaler = None
-feature_columns = ['Age', 'Income', 'Debt', 'Credit_Score', 'Loan_Amount', 
-                   'Loan_Term', 'Num_Credit_Cards', 'Gender', 'Education', 
-                   'Payment_History', 'Employment_Status', 'Residence_Type', 
-                   'Marital_Status']
+# Load the model pipeline
+artifact = joblib.load("credit_scoring_model.pkl")
+model = artifact["model"]
 
-def create_sample_model():
-    """Create a sample model for demonstration purposes"""
-    # Create synthetic training data
-    np.random.seed(42)
-    n_samples = 1000
-    
-    # Generate synthetic data
-    data = {
-        'Age': np.random.randint(18, 70, n_samples),
-        'Income': np.random.randint(20000, 200000, n_samples),
-        'Debt': np.random.randint(0, 100000, n_samples),
-        'Credit_Score': np.random.randint(300, 850, n_samples),
-        'Loan_Amount': np.random.randint(5000, 100000, n_samples),
-        'Loan_Term': np.random.choice([12, 24, 36, 48, 60], n_samples),
-        'Num_Credit_Cards': np.random.randint(0, 10, n_samples),
-        'Gender': np.random.choice(['Male', 'Female', 'Other'], n_samples),
-        'Education': np.random.choice(['High School', 'Bachelor', 'Master', 'PhD'], n_samples),
-        'Payment_History': np.random.choice(['Good', 'Bad'], n_samples),
-        'Employment_Status': np.random.choice(['Employed', 'Unemployed', 'Self-Employed'], n_samples),
-        'Residence_Type': np.random.choice(['Rented', 'Owned', 'Mortgaged'], n_samples),
-        'Marital_Status': np.random.choice(['Single', 'Married', 'Divorced', 'Widowed'], n_samples)
-    }
-    
-    df = pd.DataFrame(data)
-    
-    # Create target variable based on some rules
-    # Higher credit score, good payment history, and higher income increase chances of approval
-    df['Creditworthiness'] = (
-        (df['Credit_Score'] > 650) & 
-        (df['Payment_History'] == 'Good') & 
-        (df['Income'] > df['Loan_Amount'] * 0.3) &
-        (df['Debt'] < df['Income'] * 0.4)
-    ).astype(int)
-    
-    # Add some randomness
-    df['Creditworthiness'] = (df['Creditworthiness'] + np.random.random(n_samples) > 1.2).astype(int)
-    
-    return df
+# Feature columns expected by the model
+feature_columns = [
+    'Age','Occupation','Annual_Income','Monthly_Inhand_Salary',
+    'Num_Bank_Accounts','Num_Credit_Card','Interest_Rate','Num_of_Loan',
+    'Delay_from_due_date','Num_of_Delayed_Payment','Changed_Credit_Limit',
+    'Num_Credit_Inquiries','Credit_Mix','Outstanding_Debt',
+    'Credit_Utilization_Ratio','Credit_History_Age','Payment_of_Min_Amount',
+    'Total_EMI_per_month','Amount_invested_monthly','Payment_Behaviour','Monthly_Balance'
+]
 
-def train_model():
-    """Train a model using synthetic data"""
-    global label_encoders, scaler, model
-    
-    # Create sample data
-    df = create_sample_model()
-    
-    # Encode categorical variables
-    categorical_columns = ['Gender', 'Education', 'Payment_History', 
-                          'Employment_Status', 'Residence_Type', 'Marital_Status']
-    
-    for col in categorical_columns:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-        label_encoders[col] = le
-    
-    # Prepare features and target
-    X = df[feature_columns]
-    y = df['Creditworthiness']
-    
-    # Scale numerical features
-    numerical_columns = ['Age', 'Income', 'Debt', 'Credit_Score', 'Loan_Amount', 
-                        'Loan_Term', 'Num_Credit_Cards']
-    scaler = StandardScaler()
-    X[numerical_columns] = scaler.fit_transform(X[numerical_columns])
-    
-    # Train model
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X, y)
-    
-    print("Model trained successfully!")
-
-def preprocess_input(data):
-    """Preprocess input data for prediction"""
-    global label_encoders, scaler, feature_columns
-    
-    # Convert input data to DataFrame
-    df = pd.DataFrame([data])
-    
-    # Rename columns to match training data
-    column_mapping = {
-        'age': 'Age',
-        'gender': 'Gender',
-        'education': 'Education',
-        'income': 'Income',
-        'debt': 'Debt',
-        'credit_score': 'Credit_Score',
-        'loan_amount': 'Loan_Amount',
-        'loan_term': 'Loan_Term',
-        'num_credit_cards': 'Num_Credit_Cards',
-        'payment_history': 'Payment_History',
-        'employment_status': 'Employment_Status',
-        'residence_type': 'Residence_Type',
-        'marital_status': 'Marital_Status'
-    }
-    
-    df = df.rename(columns=column_mapping)
-    
-    # Encode categorical variables
-    categorical_columns = ['Gender', 'Education', 'Payment_History', 
-                          'Employment_Status', 'Residence_Type', 'Marital_Status']
-    
-    for col in categorical_columns:
-        if col in df.columns and col in label_encoders:
-            try:
-                df[col] = label_encoders[col].transform(df[col])
-            except ValueError as e:
-                # Handle unknown categories
-                print(f"Warning: Unknown category in {col}")
-                # Use the most frequent category as fallback
-                df[col] = 0
-    
-    # Scale numerical features
-    numerical_columns = ['Age', 'Income', 'Debt', 'Credit_Score', 'Loan_Amount', 
-                        'Loan_Term', 'Num_Credit_Cards']
-    
-    if scaler is not None:
-        df[numerical_columns] = scaler.transform(df[numerical_columns])
-    
-    # Ensure all required columns are present and in correct order
-    df = df[feature_columns]
-    
-    return df
+# Helper to convert numpy types to native Python types
+def to_serializable(obj):
+    if isinstance(obj, (np.integer, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64)):
+        return float(obj)
+    elif isinstance(obj, (np.ndarray, list, pd.Series)):
+        return [to_serializable(x) for x in obj]
+    else:
+        return obj
 
 @app.route('/')
 def index():
-    """Serve the HTML page"""
-    return render_template('index.html')
+    return render_template("index.html")
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    """Make prediction based on input data"""
     try:
-        # Get JSON data from request
         data = request.get_json()
-        
-        if not data:
-            return jsonify({'error': 'No data provided'}), 400
-        
-        # Check if required fields are present
-        required_fields = ['age', 'gender', 'education', 'income', 'debt', 
-                          'credit_score', 'loan_amount', 'loan_term', 
-                          'num_credit_cards', 'payment_history', 
-                          'employment_status', 'residence_type', 'marital_status']
-        
-        for field in required_fields:
-            if field not in data:
-                return jsonify({'error': f'Missing field: {field}'}), 400
-        
-        # Preprocess input data
-        processed_data = preprocess_input(data)
-        
-        # Make prediction
-        prediction = model.predict(processed_data)[0]
-        probability = model.predict_proba(processed_data)[0]
-        
-        # Prepare response
-        response = {
-            'prediction': int(prediction),
-            'probability': {
-                'approved': float(probability[1]),
-                'declined': float(probability[0])
-            },
-            'message': 'Loan Approved' if prediction == 1 else 'Loan Declined'
-        }
-        
-        return jsonify(response), 200
-        
+
+        # Accept both single dict or list of dicts
+        if isinstance(data, dict):
+            data = [data]
+
+        df = pd.DataFrame(data)
+        df = df.reindex(columns=feature_columns)
+
+        # Ensure object columns are strings (for text processing)
+        for col in df.select_dtypes(include=["object"]):
+            df[col] = df[col].astype(str)
+
+        # Ensure numeric columns are floats
+        for col in df.select_dtypes(include=["int64", "float64"]):
+            df[col] = df[col].astype(float)
+
+        # Make predictions
+        predictions = model.predict(df)
+        predictions = to_serializable(predictions)
+
+        # Get probabilities if available
+        prob_list = []
+        if hasattr(model, "predict_proba"):
+            prob_array = model.predict_proba(df)
+            for row in prob_array:
+                prob_dict = {str(cls): to_serializable(row[i]) for i, cls in enumerate(model.classes_)}
+                prob_list.append(prob_dict)
+
+        # Return predictions for all rows
+        results = []
+        for i in range(len(df)):
+            results.append({
+                "prediction": predictions[i],
+                "probability": prob_list[i] if prob_list else {}
+            })
+
+        return jsonify(results)
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 400
 
-@app.route('/health', methods=['GET'])
+@app.route('/health')
 def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'model_loaded': model is not None}), 200
+    return {"status": "running"}
 
-if __name__ == '__main__':
-    # Train the model when starting the app
-    print("Training model...")
-    train_model()
-    print("Model ready!")
-    
-    # Run the Flask app
-    app.run(debug=True, host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    print("Model Loaded Successfully")
+    app.run(debug=True, port=8000)

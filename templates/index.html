@@ -3,350 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Approval Prediction</title>
+    <title>Credit Score Prediction</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        input[type="number"] {
-            -moz-appearance: textfield;
-        }
-
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .full-width {
-            grid-column: span 2;
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-        }
-
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            display: none;
-        }
-
-        .approved {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .declined {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .error {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .loading {
-            text-align: center;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 600px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .full-width {
-                grid-column: span 1;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        input:focus, select:focus { border-color: #667eea; outline: none; }
+        .full-width { grid-column: span 2; }
+        button { width: 100%; padding: 15px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; }
+        button:hover { transform: translateY(-2px); }
+        .result { margin-top: 30px; padding: 20px; border-radius: 5px; text-align: center; font-size: 24px; font-weight: bold; display: none; }
+        .approved { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .declined { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .error { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .loading { text-align: center; margin-top: 20px; display: none; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Loan Approval Prediction System</h1>
-        
-        <form id="predictionForm">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="age">Age</label>
-                    <input type="number" id="age" name="age" min="18" max="100" required>
-                </div>
+<div class="container">
+    <h1>Credit Score Prediction</h1>
+    <form id="predictionForm">
+        <div class="form-grid">
 
-                <div class="form-group">
-                    <label for="gender">Gender</label>
-                    <select id="gender" name="gender" required>
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="education">Education</label>
-                    <select id="education" name="education" required>
-                        <option value="">Select Education</option>
-                        <option value="High School">High School</option>
-                        <option value="Bachelor">Bachelor</option>
-                        <option value="Master">Master</option>
-                        <option value="PhD">PhD</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="income">Annual Income ($)</label>
-                    <input type="number" id="income" name="income" min="0" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="debt">Existing Debt ($)</label>
-                    <input type="number" id="debt" name="debt" min="0" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="credit_score">Credit Score</label>
-                    <input type="number" id="credit_score" name="credit_score" min="300" max="850" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="loan_amount">Loan Amount ($)</label>
-                    <input type="number" id="loan_amount" name="loan_amount" min="0" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="loan_term">Loan Term (months)</label>
-                    <select id="loan_term" name="loan_term" required>
-                        <option value="">Select Term</option>
-                        <option value="12">12 months</option>
-                        <option value="24">24 months</option>
-                        <option value="36">36 months</option>
-                        <option value="48">48 months</option>
-                        <option value="60">60 months</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="num_credit_cards">Number of Credit Cards</label>
-                    <input type="number" id="num_credit_cards" name="num_credit_cards" min="0" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="payment_history">Payment History</label>
-                    <select id="payment_history" name="payment_history" required>
-                        <option value="">Select Payment History</option>
-                        <option value="Good">Good</option>
-                        <option value="Bad">Bad</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="employment_status">Employment Status</label>
-                    <select id="employment_status" name="employment_status" required>
-                        <option value="">Select Status</option>
-                        <option value="Employed">Employed</option>
-                        <option value="Unemployed">Unemployed</option>
-                        <option value="Self-Employed">Self-Employed</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="residence_type">Residence Type</label>
-                    <select id="residence_type" name="residence_type" required>
-                        <option value="">Select Residence</option>
-                        <option value="Rented">Rented</option>
-                        <option value="Owned">Owned</option>
-                        <option value="Mortgaged">Mortgaged</option>
-                    </select>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="marital_status">Marital Status</label>
-                    <select id="marital_status" name="marital_status" required>
-                        <option value="">Select Marital Status</option>
-                        <option value="Single">Single</option>
-                        <option value="Married">Married</option>
-                        <option value="Divorced">Divorced</option>
-                        <option value="Widowed">Widowed</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label>Age</label>
+                <input type="number" id="Age" value="28" placeholder="28" required>
             </div>
 
-            <button type="submit">Check Loan Eligibility</button>
-        </form>
+            <div class="form-group">
+                <label>Occupation</label>
+                <select id="Occupation" required>
+                    <option>Teacher</option>
+                    <option>Engineer</option>
+                    <option>Doctor</option>
+                    <option>Scientist</option>
+                    <option>Lawyer</option>
+                    <option>Developer</option>
+                    <option>Mechanic</option>
+                    <option>Accountant</option>
+                    <option>Architect</option>
+                    <option>Entrepreneur</option>
+                    <option>Media_Manager</option>
+                    <option>Musician</option>
+                    <option>Journalist</option>
+                    <option>Manager</option>
+                    <option>Writer</option>
+                </select>
+            </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p style="margin-top: 10px;">Processing your request...</p>
+            <div class="form-group">
+                <label>Annual Income</label>
+                <input type="number" id="Annual_Income" value="34847.84" placeholder="34847.84">
+            </div>
+
+            <div class="form-group">
+                <label>Monthly Salary</label>
+                <input type="number" id="Monthly_Inhand_Salary" value="3037.986667" placeholder="3037.986667">
+            </div>
+
+            <div class="form-group">
+                <label>Bank Accounts</label>
+                <input type="number" id="Num_Bank_Accounts" value="2" placeholder="2">
+            </div>
+
+            <div class="form-group">
+                <label>Credit Cards</label>
+                <input type="number" id="Num_Credit_Card" value="4" placeholder="4">
+            </div>
+
+            <div class="form-group">
+                <label>Interest Rate</label>
+                <input type="number" id="Interest_Rate" value="6" placeholder="6">
+            </div>
+
+            <div class="form-group">
+                <label>Loans</label>
+                <input type="number" id="Num_of_Loan" value="1" placeholder="1">
+            </div>
+
+            <div class="form-group">
+                <label>Delay From Due Date</label>
+                <input type="number" id="Delay_from_due_date" value="7" placeholder="7">
+            </div>
+
+            <div class="form-group">
+                <label>Delayed Payments</label>
+                <input type="number" id="Num_of_Delayed_Payment" value="1" placeholder="1">
+            </div>
+
+            <div class="form-group">
+                <label>Changed Credit Limit</label>
+                <input type="number" step="0.01" id="Changed_Credit_Limit" value="7.42" placeholder="7.42">
+            </div>
+
+            <div class="form-group">
+                <label>Credit Inquiries</label>
+                <input type="number" id="Num_Credit_Inquiries" value="2" placeholder="2">
+            </div>
+
+            <div class="form-group">
+                <label>Credit Mix</label>
+                <select id="Credit_Mix">
+                    <option>Good</option>
+                    <option>Bad</option>
+                    <option>Standard</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Outstanding Debt</label>
+                <input type="number" id="Outstanding_Debt" value="605.03" placeholder="605.03">
+            </div>
+
+            <div class="form-group">
+                <label>Credit Utilization Ratio</label>
+                <input type="number" step="0.01" id="Credit_Utilization_Ratio" value="38.550848" placeholder="38.550848">
+            </div>
+
+            <div class="form-group">
+                <label>Credit History Age</label>
+                <input type="text" id="Credit_History_Age" value="26 Years and 8 Months" placeholder="26 Years and 8 Months">
+            </div>
+
+            <div class="form-group">
+                <label>Payment of Minimum Amount</label>
+                <select id="Payment_of_Min_Amount">
+                    <option>No</option>
+                    <option>Yes</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Total EMI per Month</label>
+                <input type="number" id="Total_EMI_per_month" value="18.816215" placeholder="18.816215">
+            </div>
+
+            <div class="form-group">
+                <label>Monthly Investment</label>
+                <input type="number" id="Amount_invested_monthly" value="40.391238" placeholder="40.391238">
+            </div>
+
+            <div class="form-group">
+                <label>Payment Behaviour</label>
+                <select id="Payment_Behaviour">
+                    <option>High_spent_Large_value_payments</option>
+                    <option>High_spent_Medium_value_payments</option>
+                    <option>High_spent_Small_value_payments</option>
+                    <option>Low_spent_Large_value_payments</option>
+                    <option>Low_spent_Medium_value_payments</option>
+                    <option>Low_spent_Small_value_payments</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Monthly Balance</label>
+                <input type="number" id="Monthly_Balance" value="484.591214" placeholder="484.591214">
+            </div>
+
         </div>
 
-        <div class="result" id="result"></div>
+        <button type="submit">Predict Credit Score</button>
+    </form>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 10px;">Processing your request...</p>
     </div>
 
-    <script>
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Show loading spinner
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('result').style.display = 'none';
-            
-            // Collect form data
-            const formData = {
-                age: parseInt(document.getElementById('age').value),
-                gender: document.getElementById('gender').value,
-                education: document.getElementById('education').value,
-                income: parseFloat(document.getElementById('income').value),
-                debt: parseFloat(document.getElementById('debt').value),
-                credit_score: parseInt(document.getElementById('credit_score').value),
-                loan_amount: parseFloat(document.getElementById('loan_amount').value),
-                loan_term: parseInt(document.getElementById('loan_term').value),
-                num_credit_cards: parseInt(document.getElementById('num_credit_cards').value),
-                payment_history: document.getElementById('payment_history').value,
-                employment_status: document.getElementById('employment_status').value,
-                residence_type: document.getElementById('residence_type').value,
-                marital_status: document.getElementById('marital_status').value
-            };
+    <div class="result" id="result"></div>
+</div>
 
-            try {
-                // Make POST request to Flask endpoint
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
+<script>
+document.getElementById('predictionForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    document.getElementById('loading').style.display='block';
+    document.getElementById('result').style.display='none';
 
-                const data = await response.json();
-                
-                // Hide loading spinner
-                document.getElementById('loading').style.display = 'none';
-                
-                // Display result
-                const resultDiv = document.getElementById('result');
-                resultDiv.style.display = 'block';
-                
-                if (response.ok) {
-                    if (data.prediction === 1 || data.prediction === "1") {
-                        resultDiv.className = 'result approved';
-                        resultDiv.textContent = '✅ LOAN APPROVED';
-                    } else {
-                        resultDiv.className = 'result declined';
-                        resultDiv.textContent = '❌ LOAN DECLINED';
-                    }
-                } else {
-                    resultDiv.className = 'result error';
-                    resultDiv.textContent = `Error: ${data.error || 'Something went wrong'}`;
-                }
-            } catch (error) {
-                document.getElementById('loading').style.display = 'none';
-                const resultDiv = document.getElementById('result');
-                resultDiv.style.display = 'block';
-                resultDiv.className = 'result error';
-                resultDiv.textContent = 'Error: Could not connect to the server';
-                console.error('Error:', error);
-            }
+    const formData = {
+        Age: parseFloat(document.getElementById('Age').value),
+        Occupation: document.getElementById('Occupation').value,
+        Annual_Income: parseFloat(document.getElementById('Annual_Income').value),
+        Monthly_Inhand_Salary: parseFloat(document.getElementById('Monthly_Inhand_Salary').value),
+        Num_Bank_Accounts: parseInt(document.getElementById('Num_Bank_Accounts').value),
+        Num_Credit_Card: parseInt(document.getElementById('Num_Credit_Card').value),
+        Interest_Rate: parseFloat(document.getElementById('Interest_Rate').value),
+        Num_of_Loan: parseInt(document.getElementById('Num_of_Loan').value),
+        Delay_from_due_date: parseInt(document.getElementById('Delay_from_due_date').value),
+        Num_of_Delayed_Payment: parseInt(document.getElementById('Num_of_Delayed_Payment').value),
+        Changed_Credit_Limit: parseFloat(document.getElementById('Changed_Credit_Limit').value),
+        Num_Credit_Inquiries: parseInt(document.getElementById('Num_Credit_Inquiries').value),
+        Credit_Mix: document.getElementById('Credit_Mix').value,
+        Outstanding_Debt: parseFloat(document.getElementById('Outstanding_Debt').value),
+        Credit_Utilization_Ratio: parseFloat(document.getElementById('Credit_Utilization_Ratio').value),
+        Credit_History_Age: document.getElementById('Credit_History_Age').value,
+        Payment_of_Min_Amount: document.getElementById('Payment_of_Min_Amount').value,
+        Total_EMI_per_month: parseFloat(document.getElementById('Total_EMI_per_month').value),
+        Amount_invested_monthly: parseFloat(document.getElementById('Amount_invested_monthly').value),
+        Payment_Behaviour: document.getElementById('Payment_Behaviour').value,
+        Monthly_Balance: parseFloat(document.getElementById('Monthly_Balance').value)
+    };
+
+    try{
+        const response = await fetch('/predict',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(formData)
         });
-    </script>
+        const data = await response.json();
+        document.getElementById('loading').style.display='none';
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display='block';
+
+        if(response.ok){
+            if(data.prediction==="Good" || data.prediction==="Good".toLowerCase()){
+                resultDiv.className='result approved';
+                resultDiv.textContent='✅ Credit Score: Good';
+            } else if(data.prediction==="Standard"){
+                resultDiv.className='result declined';
+                resultDiv.textContent='⚠️ Credit Score: Standard';
+            } else {
+                resultDiv.className='result declined';
+                resultDiv.textContent='❌ Credit Score: Poor';
+            }
+        } else {
+            resultDiv.className='result error';
+            resultDiv.textContent=`Error: ${data.error || 'Something went wrong'}`;
+        }
+    }catch(error){
+        document.getElementById('loading').style.display='none';
+        const resultDiv=document.getElementById('result');
+        resultDiv.style.display='block';
+        resultDiv.className='result error';
+        resultDiv.textContent='Error: Could not connect to the server';
+        console.error(error);
+    }
+});
+</script>
 </body>
 </html>
