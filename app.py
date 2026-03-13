@@ -3,10 +3,21 @@ from flask_cors import CORS
 import pandas as pd
 import joblib
 import numpy as np
-from preprocessing import FeatureEngineering, NumericalTransformer, iqr_cap
+import sys
+import preprocessing
+
+
 
 app = Flask(__name__)
 CORS(app)
+
+
+
+
+
+sys.modules['__main__'].FeatureEngineering = preprocessing.FeatureEngineering
+sys.modules['__main__'].NumericalTransformer = preprocessing.NumericalTransformer
+sys.modules['__main__'].iqr_cap = preprocessing.iqr_cap
 
 # Load the model pipeline
 artifact = joblib.load("credit_scoring_model.pkl")
@@ -88,4 +99,4 @@ def health():
 
 if __name__ == "__main__":
     print("Model Loaded Successfully")
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=8080)
